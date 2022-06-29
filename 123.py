@@ -219,8 +219,8 @@ def kolmogorov(Function, function):
     alfa = D * math.sqrt(N)
     print(f"alfa is {alfa}")
 
-def ggg(a, data):
-    a1 = 1 + 1 / a[0]  # 3
+def ggg(a, data): #a / data - неизвестные переменные . наши а и б
+    a1 = 1 + 1 / a[0]  # 3 
     a2 = 1 + 2 / a[0]  # 5
 
     G = [((math.exp(-a)) * (a ** (a - 1 / 2)) *
@@ -230,10 +230,10 @@ def ggg(a, data):
            (139 / (51840 * a ** 3)) -
            (571 / (2488320 * a ** 4)))) for a in [a1, a2]]
 
-    return [data[0] / G[0] - a[1], data[0] / data[1] + 1 - G[1] / G[0]**2]
+    return [data[0] / G[0] - a[1], data[0] / data[1] + 1 - G[1] / G[0]**2] # b , a
 
 
-def veibula(D, T, fet):
+def veibula(D, T, fet): #
     x = fsolve(ggg, np.array([1, 1]), [T, D])
     print("___________________________________________")
     print("Veibula")
