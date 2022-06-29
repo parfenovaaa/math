@@ -253,6 +253,45 @@ def veibula(D, T, fet): #
     print(f"Sk = {Sk}")
     Ex = 6 / float(a)
     print(f"Ex  = {Ex }")
+    return f
+
+# ⦁	Расчет параметров предполагаемых теоретических распределений методом максимального правдоподобия
+
+
+def aaa(a):
+    return (-1 + (a - 0.5) / a +
+          (-(1 / (12 * a**2)) - 2 / (288 * a ** 3) + (3 * 139) / (51840 * a**4) + (571 * 4) / (2488320 * a**5)) /
+          (1 + (1 / (12 * a)) + (1 / (288 * a ** 2)) - (139 / (51840 * a ** 3)) - (571 / (2488320 * a ** 4))))
+
+
+def gamma_max(T): #⦁	Для гамма-распределения
+
+    a = fsolve(aaa, np.array([1]))
+    # print(f"a  = {a}")
+    def G(a):
+        return (-1 + (a - 0.5) / a +
+          (-(1 / (12 * a**2)) - 2 / (288 * a **3) + (3 * 139) / (51840 * a**4) + (571 * 4) / (2488320 * a**5)) /
+          (1 + (1 / (12 * a)) + (1 / (288 * 1 ** 2)) - (139 / (51840 * a ** 3)) - (571 / (2488320 * a ** 4))))
+    G = [quad(G, 0.5, t)[0] for t in T_LIST]
+    print(f"G  = {G}")
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot()
+    ax.set_ylabel("Fe(t), Fw(t)")
+    ax.set_xlabel("t")
+    plt.title("Аппроксимация эмпирической функции распределения Вейбулла "
+              "\nс параметрами, найденными методом моментов")
+    ax.plot(T_LIST, G)
+    plt.show()
+
+    a = 1 / N * math.fsum([math.log(t / T) for t in T_LIST])
+    print(f"a  = {a}")
+    alfa = a / T
+    print(f"alfa  = {alfa}")
+
+    Ga = (-1 + (a - 0.5) / a +
+          (-1 / (12 * a**2) - 2 / (288 * a **3) + (3 * 139) / (51840 * a**4) + (571 * 4) / (2488320 * a**5)) /
+          (1 + (1 / (12 * a)) + (1 / (288 * a ** 2)) - (139 / (51840 * a ** 3)) - (571 / (2488320 * a ** 4))))
+    print(f"Ga  = {Ga}")
 
 
 if __name__ == "__main__":
@@ -262,4 +301,6 @@ if __name__ == "__main__":
     F = program_3(m1, m2, m3, m4, T, ro, fet)
     kolmogorov(fet, F)
     # методом моментв Вейбула
-    veibula(D, T, fet)
+    FW = veibula(D, T, fet)
+    kolmogorov(fet, FW)
+    gamma_max(T)
