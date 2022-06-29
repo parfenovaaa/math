@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 import math
+
+import numpy as np
 from scipy.integrate import quad
+from scipy.optimize import fsolve
 
 # Элементы выборки
 T_LIST = [
@@ -64,7 +67,7 @@ def program_1():
     return m1, m2, m3, m4, T, fet
 
 
-def program_2(m1, m2, m3, m4, ):
+def program_2(m1, m2, m3, m4):
     # 1.2.	Расчет точечных оценок четырех центральных моментов
     # с учетом поправочных коэффициентов для обеспечения
     # несмещенности вычисляемых моментов.
@@ -115,7 +118,7 @@ def program_2(m1, m2, m3, m4, ):
     print("ExN is kf ostroveshinnosti ", round(ExN, 7))
     ExH = ((N - 1) / ((N - 2) * (N - 3))) * ((N + 1) * Ex + 6)
     print("ExH is kf ostroveshinnosti ", round(ExH, 7))
-    return Sk, SkH, Ex, ExH, ro
+    return Sk, SkH, Ex, ExH, ro, D
 
 
 def program_3(m1, m2, m3, m4, T, ro, fet):
@@ -210,15 +213,48 @@ def kolmogorov(Function, function):
     ax.plot(T_LIST, y_t)
     plt.show()
 
-    D = numpy.amin(y_t, 0)
+    D = numpy.amax(y_t, 0)
     print(f" D is { D}")
 
     alfa = D * math.sqrt(N)
     print(f"alfa is {alfa}")
 
+def ggg(a, data):
+    a1 = 1 + 1 / a[0]  # 3
+    a2 = 1 + 2 / a[0]  # 5
+
+    G = [((math.exp(-a)) * (a ** (a - 1 / 2)) *
+          (math.sqrt(2 * math.pi)) *
+          (1 + (1 / (12 * a)) +
+           (1 / (288 * 1 ** 2)) -
+           (139 / (51840 * a ** 3)) -
+           (571 / (2488320 * a ** 4)))) for a in [a1, a2]]
+
+    return [data[0] / G[0] - a[1], data[0] / data[1] + 1 - G[1] / G[0]**2]
+
+
+def veibula(D, T, fet):
+    x = fsolve(ggg, np.array([1, 1]), [T, D])
+    print("___________________________________________")
+    print("Veibula")
+    print(f" b = {x[0]}, a = {x[1]}")
+    f = [1 - math.exp(-(t/x[0])** x[1]) for t in T_LIST]
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot()
+    ax.set_ylabel("f(t)")
+    ax.set_xlabel("t")
+    plt.title("Аппроксимация эмпирической функции распределения Вейбулла "
+              "\nс параметрами, найденными методом моментов")
+    ax.plot(T_LIST, f)
+    ax.plot(T_LIST, fet)
+    plt.show()
+
 
 if __name__ == "__main__":
+    # Методом моентов гамма
     m1, m2, m3, m4, T, fet = program_1()
-    Sk, SkH, Ex, ExH, ro = program_2(m1, m2, m3, m4,)
+    Sk, SkH, Ex, ExH, ro, D = program_2(m1, m2, m3, m4,)
     F = program_3(m1, m2, m3, m4, T, ro, fet)
     kolmogorov(fet, F)
+    # методом моментв Вейбула
+    veibula(D, T, fet)
