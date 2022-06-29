@@ -234,20 +234,25 @@ def ggg(a, data):
 
 
 def veibula(D, T, fet):
-    x = fsolve(ggg, np.array([1, 1]), [T, D])
+    x = fsolve(ggg, np.array([0.5, 0.5]), [T, D])
     print("___________________________________________")
     print("Veibula")
-    print(f" b = {x[0]}, a = {x[1]}")
-    f = [1 - math.exp(-(t/x[0])** x[1]) for t in T_LIST]
+    a, b = [float(v) for v in x]
+    print(f"b = {b}, a = {a}")
+    f = [1 - math.exp(-(t/b) ** a) for t in T_LIST]
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot()
-    ax.set_ylabel("f(t)")
+    ax.set_ylabel("Fe(t), Fw(t)")
     ax.set_xlabel("t")
     plt.title("Аппроксимация эмпирической функции распределения Вейбулла "
               "\nс параметрами, найденными методом моментов")
     ax.plot(T_LIST, f)
     ax.plot(T_LIST, fet)
     plt.show()
+    Sk = 2 / math.sqrt(a)
+    print(f"Sk = {Sk}")
+    Ex = 6 / float(a)
+    print(f"Ex  = {Ex }")
 
 
 if __name__ == "__main__":
