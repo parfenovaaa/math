@@ -230,7 +230,7 @@ def ggg(a, data): #a / data - неизвестные переменные . на
            (139 / (51840 * a ** 3)) -
            (571 / (2488320 * a ** 4)))) for a in [a1, a2]]
 
-    return [data[0] / G[0] - a[1], data[0] / data[1] + 1 - G[1] / G[0]**2] # b , a
+    return [data[0] / G[0] - a[1], data[0] / data[1] + 1 - G[1] / G[0]**2]  # b , a
 
 
 def veibula(D, T, fet): #
@@ -258,41 +258,79 @@ def veibula(D, T, fet): #
 # ⦁	Расчет параметров предполагаемых теоретических распределений методом максимального правдоподобия
 
 
-def aaa(a):
-    return (-1 + (a - 0.5) / a +
-          (-(1 / (12 * a**2)) - 2 / (288 * a ** 3) + (3 * 139) / (51840 * a**4) + (571 * 4) / (2488320 * a**5)) /
-          (1 + (1 / (12 * a)) + (1 / (288 * a ** 2)) - (139 / (51840 * a ** 3)) - (571 / (2488320 * a ** 4))))
+def gamma_max(T, fet): #⦁	Для гамма-распределения
 
+    def f(a):
+        Q = 1 + (1 / (12 * (a))) + (1 / (288 * (a ** 2))) - (139 / (51840 * (a ** 3))) - (571 / (2488320 * (a ** 4)))
+        G = (-1 + ((a - 0.5) / a) + (-(1 / (12 * (a ** 2))) - (2 / (288 * (a ** 3))) + (3 * 139 / 51840 * (a ** 4)) + (
+                    571 * 4 / (2488320 * (a ** 5))))) / Q
+        return G
 
-def gamma_max(T): #⦁	Для гамма-распределения
+    a = fsolve(f, 0.5)  # начальное приближение решения уравнения a0=0.5
+    a = float(a[0])
+    print('a =', a)  # вывод на экран параметра a
 
-    a = fsolve(aaa, np.array([1]))
-    # print(f"a  = {a}")
-    def G(a):
-        return (-1 + (a - 0.5) / a +
-          (-(1 / (12 * a**2)) - 2 / (288 * a **3) + (3 * 139) / (51840 * a**4) + (571 * 4) / (2488320 * a**5)) /
-          (1 + (1 / (12 * a)) + (1 / (288 * 1 ** 2)) - (139 / (51840 * a ** 3)) - (571 / (2488320 * a ** 4))))
-    G = [quad(G, 0.5, t)[0] for t in T_LIST]
-    print(f"G  = {G}")
-    fig = plt.figure(figsize=(8, 8))
-    ax = fig.add_subplot()
-    ax.set_ylabel("Fe(t), Fw(t)")
-    ax.set_xlabel("t")
-    plt.title("Аппроксимация эмпирической функции распределения Вейбулла "
-              "\nс параметрами, найденными методом моментов")
-    ax.plot(T_LIST, G)
-    plt.show()
-
-    a = 1 / N * math.fsum([math.log(t / T) for t in T_LIST])
-    print(f"a  = {a}")
+    s = math.fsum([math.log(t / T) for t in T_LIST]) / N
+    print(f"s  = {s}")
     alfa = a / T
     print(f"alfa  = {alfa}")
 
-    Ga = (-1 + (a - 0.5) / a +
-          (-1 / (12 * a**2) - 2 / (288 * a **3) + (3 * 139) / (51840 * a**4) + (571 * 4) / (2488320 * a**5)) /
-          (1 + (1 / (12 * a)) + (1 / (288 * a ** 2)) - (139 / (51840 * a ** 3)) - (571 / (2488320 * a ** 4))))
-    print(f"Ga  = {Ga}")
+    Sk = 2 / math.sqrt(a)
+    print("Sk is ", Sk)
+    Ex = 6 / a
+    print("Ex is ", Ex)
+    G = ((math.exp(-a)) * (a ** (a - 1 / 2)) *
+         (math.sqrt(2 * math.pi)) *
+         (1 + (1 / (12 * a)) +
+          (1 / (288 * a ** 2)) -
+          (139 / (51840 * a ** 3)) -
+          (571 / (2488320 * a ** 4))))
+    print("G is ", round(G, 7))
+    # Расчет нумерического выражения для плотности вероятности:
+    def f(t):
+        return ((alfa ** a) / G) * (t ** (a - 1)) * math.exp(-alfa * t)
+    F = [quad(f, 0, t)[0] for t in T_LIST]
+    print(f"F is {F}")
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot()
+    ax.set_ylabel("Fe, F")
+    ax.set_xlabel("t")
+    ax.plot(T_LIST, F, label="Эмпирическая функция распределения")
+    ax.step(T_LIST, fet, where="post", label="Аппроксимация эмпирической функции")
+    ax.grid("Аппроксимация эмпирической функции распределения "
+            "гамма распределением с параметрами, найденными методом максимального правдоподобия")
+    plt.title("График эмпирической функции распределения случайной величины")
+    plt.show()
+    return F
 
+def veibula_max(T, D, fet):
+
+    def f(a):
+        sum_1 = sum([(t**a)*math.log(t) for t in T_LIST])
+        sum_2 = sum([t**a for t in T_LIST])
+        sum_3 = sum([math.log(t) for t in T_LIST])
+        return N / a - N * (sum_1 / sum_2) + sum_3
+
+    a = fsolve(f, 1)  # начальное приближение решения уравнения a0=1
+    a = float(a[0])
+    print("Расчёт методом максимального правдоподобия для распределения Вейбулла:")
+    print("a is", a)  # вывод на экран параметра a
+
+    summ = sum([t ** a for t in T_LIST])
+    b = (summ / N) ** (1 / a)#вывод на экран параметра b
+    print("b is", b)
+    F = [1 - math.exp(-(t/b) ** a) for t in T_LIST]
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot()
+    ax.set_ylabel("Fe, F")
+    ax.set_xlabel("t")
+    ax.plot(T_LIST, F, label="Эмпирическая функция распределения")
+    ax.step(T_LIST, fet, where="post", label="Аппроксимация эмпирической функции")
+    ax.grid("Аппроксимация эмпирической функции распределения "
+            "гамма распределением с параметрами, найденными методом максимального правдоподобия")
+    plt.title("График эмпирической функции распределения случайной величины")
+    plt.show()
+    return  F
 
 if __name__ == "__main__":
     # Методом моентов гамма
@@ -303,4 +341,7 @@ if __name__ == "__main__":
     # методом моментв Вейбула
     FW = veibula(D, T, fet)
     kolmogorov(fet, FW)
-    gamma_max(T)
+    F = gamma_max(T, fet)
+    kolmogorov(fet, F)
+    F = veibula_max(T, D, fet)
+    kolmogorov(fet, FW)
