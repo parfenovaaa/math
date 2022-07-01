@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import math
 
-import numpy as np
-import sympy
 from scipy.integrate import quad
 from scipy.optimize import fsolve
 from sympy import *
@@ -43,10 +41,6 @@ def kolmogorov(Function, function):
     print(f"alfa is {alfa}")
 
 
-def a_parametr(a):
-    Q = 1 + (1 / (12 * (a))) + (1 / (288 * (a ** 2))) - (139 / (51840 * (a ** 3))) - (571 / (2488320 * (a ** 4)))
-    G = (-1 + ((a - 0.5) / a) + (-(1 / (12 * (a ** 2))) - (2 / (288 * (a ** 3))) + (3 * 139 / 51840 * (a ** 4)) + (571 * 4 / (2488320 * (a ** 5))))) / Q
-    return G
 T_LIST = [
     151.3466, 242.2403, 191.665, 185.5005, 271.1247,
     139.1302, 224.5614, 223.8082, 156.4592, 188.6266,
@@ -69,15 +63,9 @@ m1 = sum(T_LIST) / N
 T = m1
 print("T is", round(T, 2))
 print("расчет первых четырех начальных моментов")
-# создаем новый список со всеми элем-ми возведенными в ^2
-m2_list = [x ** 2 for x in T_LIST]
-m2 = sum(m2_list) / N
-# создаем новый список со всеми элем-ми возведенными в ^3
-m3_list = [x ** 3 for x in T_LIST]
-m3 = sum(m3_list) / N
-# создаем новый список со всеми элем-ми возведенными в ^4
-m4_list = [x ** 4 for x in T_LIST]
-m4 = sum(m4_list) / N
+m2 = sum([x ** 2 for x in T_LIST]) / N
+m3 = sum([x ** 3 for x in T_LIST]) / N
+m4 = sum([x ** 4 for x in T_LIST]) / N
 print("m1 is ", round(m1, 2))
 print("m2 is ", round(m2, 2))
 print("m3 is ", round(m3, 2))
@@ -128,8 +116,7 @@ print("Sk is ", round(Sk, 7))
 Ex = (mu4 / ro ** 4) - 3
 print("Ex is ", round(Ex, 7))
 # Расчет несмещенных центральных моментов
-D_1 = [(x - T) ** 2 for x in T_LIST]
-D = sum(D_1) / N
+D = sum([(x - T) ** 2 for x in T_LIST])/ N
 print("D is ", round(D, 2))
 print("Расчет несмещенных центральных моментов")
 mu1 = T = m1
@@ -214,28 +201,29 @@ print(f"Ex is {ExH} and Ex_g is {Ex_g}")
 
 kolmogorov(fet, F)
 
-# TODO Расчет параметров предполагаемых теоретических распределений методом
-#  моментов для Распределения Вейбула
+print("Расчет параметров предполагаемых теоретических распределений методом моментов для Распределения Вейбула")
 
 td = D / T ** 2 + 1
 
 def veibula(a): #a / data - неизвестные переменные . наши а и б
     a1 = 1 + 1 / a  # 3
     a2 = 1 + 2 / a  # 5
-    return  td - G(a2) / (G(a1)**2)
+    return D / T ** 2 + 1 - G(a2) / (G(a1)**2)
 x = fsolve(veibula, 0.5)
 print("___________________________________________")
 print("Veibula")
-a = float(v)
-b=T/gamma(1+1/a)
-
-print(f"b = {b}, a = {a}")
+a = float(x)
+b = T/gamma(1+1/a)
+print("a is", a)
+print("b is", b)
 Sk = 2 / math.sqrt(a)
 print(f"Sk = {Sk}")
 Ex = 6 / float(a)
 print(f"Ex  = {Ex}")
+
 def vei(t):
     return (1-exp(-(t/b)**a))
+
 # F = [quad(vei, 0.5, t)[0] for t in T_LIST]
 F = [vei(t) for t in T_LIST]
 fig = plt.figure(figsize=(8, 8))
@@ -250,12 +238,14 @@ plt.show()
 
 kolmogorov(fet, F)
 
-# TODO Расчет параметров предполагаемых теоретических распределений
-#  методом максимального правдоподобия
-
+print("Расчет параметров предполагаемых теоретических распределений методом максимального правдоподобия")
+def a_parametr(a):
+    Q = 1 + (1 / (12 * (a))) + (1 / (288 * (a ** 2))) - (139 / (51840 * (a ** 3))) - (571 / (2488320 * (a ** 4)))
+    G = (-1 + ((a - 0.5) / a) + (-(1 / (12 * (a ** 2))) - (2 / (288 * (a ** 3))) + (3 * 139 / 51840 * (a ** 4)) + (571 * 4 / (2488320 * (a ** 5))))) / Q
+    return G
 # TODO Гамма распределение
-a = fsolve(a_parametr, 0.5)  # начальное приближение решения уравнения a0=0.5
-a = float(a[0])
+at = fsolve(a_parametr, 0.5)  # начальное приближение решения уравнения a0=0.5
+a = float(at[0])
 print('a =', a)  # вывод на экран параметра a
 
 C = math.fsum([math.log(t / T) for t in T_LIST]) / N
